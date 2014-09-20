@@ -3,10 +3,10 @@
   <channel>
     <title>toyama0919’s Sandbox</title>
     <description>技術的なことを書いていきます。</description>
-    <link>http://yourdomain.com/</link>
-    <atom:link href="http://yourdomain.com/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sat, 20 Sep 2014 23:36:48 +0900</pubDate>
-    <lastBuildDate>Sat, 20 Sep 2014 23:36:48 +0900</lastBuildDate>
+    <link>https://toyama0919.github.io/</link>
+    <atom:link href="https://toyama0919.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Sun, 21 Sep 2014 00:30:12 +0900</pubDate>
+    <lastBuildDate>Sun, 21 Sep 2014 00:30:12 +0900</lastBuildDate>
     <generator>Jekyll v2.2.0</generator>
     
       <item>
@@ -80,8 +80,8 @@
 
 </description>
         <pubDate>Fri, 22 Aug 2014 03:48:27 +0900</pubDate>
-        <link>http://yourdomain.com/rds/2014/08/22/aws/</link>
-        <guid isPermaLink="true">http://yourdomain.com/rds/2014/08/22/aws/</guid>
+        <link>https://toyama0919.github.io/rds/2014/08/22/aws/</link>
+        <guid isPermaLink="true">https://toyama0919.github.io/rds/2014/08/22/aws/</guid>
         
         
         <category>rds</category>
@@ -96,8 +96,8 @@
 
 </description>
         <pubDate>Thu, 21 Aug 2014 03:48:27 +0900</pubDate>
-        <link>http://yourdomain.com/jekyll/update/2014/08/21/welcome-to-jekyll/</link>
-        <guid isPermaLink="true">http://yourdomain.com/jekyll/update/2014/08/21/welcome-to-jekyll/</guid>
+        <link>https://toyama0919.github.io/jekyll/update/2014/08/21/welcome-to-jekyll/</link>
+        <guid isPermaLink="true">https://toyama0919.github.io/jekyll/update/2014/08/21/welcome-to-jekyll/</guid>
         
         <category>startup</category>
         
