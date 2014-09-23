@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>toyama0919’s Sandbox</title>
+    <description>技術的なことを書いていきます。</description>
+    <link>https://toyama0919.github.io/</link>
+    <atom:link href="https://toyama0919.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Tue, 23 Sep 2014 13:16:20 +0900</pubDate>
+    <lastBuildDate>Tue, 23 Sep 2014 13:16:20 +0900</lastBuildDate>
+    <generator>Jekyll v2.2.0</generator>
+    
+      <item>
+        <title>RDSのRestoreをaws-cliでやる</title>
+        <description>&lt;p&gt;RDSのRestoreをaws-cliでやると、意外と面倒だったのでメモ。&lt;/p&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;やりたいこと&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;ステージング環境を毎日本番に近い状態でリストアする。&lt;/li&gt;
+  &lt;li&gt;ステージング環境なので瞬断は可&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;早速やり方を。&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;aws rds restore-db-instance-to-point-in-time &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --region&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;ap-northeast-1 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --source-db-instance-identifier original-db &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --target-db-instance-identifier staging-db-tmp &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --db-subnet-group-name subnetname &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --iops &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --db-instance-class db.m3.large &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --restore-time 2014-08-20T10:00:00Z&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;時間の指定はUTC時間にする必要がある。&lt;/li&gt;
+  &lt;li&gt;ステージング環境なのでiopsは不要なので0&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;テンポラリのステージング用DBが終わるまで待って、以下を実行。&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;aws rds delete-db-instance &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --db-instance-identifier staging-db &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --skip-final-snapshot&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;これまで動いていたものを削除しています。&lt;/li&gt;
+  &lt;li&gt;この後リネームします。&lt;/li&gt;
+  &lt;li&gt;DBのサイズが300GBだと6時間位かかったりします。。&lt;/li&gt;
+  &lt;li&gt;–skip-final-snapshotでスナップショット不要で削除&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;parameter-group&quot;&gt;リネームとParameter Groupの変更&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;aws rds modify-db-instance &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --db-instance-identifier staging-db-tmp &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --vpc-security-group-ids vpc-XXXXXXXX &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --db-parameter-group-name rds-parameter-name &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --apply-immediately &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  --new-db-instance-identifier staging-db&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;restore-db-instance-to-point-in-timeではVPCのSGを指定できない。&lt;/li&gt;
+  &lt;li&gt;–apply-immediatelyで即時反映(再起動が走る)&lt;/li&gt;
+  &lt;li&gt;一時作成中のDBから–new-db-instance-identifier でidentifierを変更し、通常時のstaging環境としてリストア&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;rds&quot;&gt;その他RDSのプチ情報&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;Parameter Groupをmysqlのversion間で共有できない
+    &lt;ul&gt;
+      &lt;li&gt;mysql5.5とmysql5.6が存在する場合、同じParameter Groupを使えない&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;まとめ&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;コマンド一発で終わらないのでつらい。&lt;/li&gt;
+  &lt;li&gt;awscliの処理が非同期なのでつらい –waitみたいなオプションが欲しい&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Fri, 22 Aug 2014 03:48:27 +0900</pubDate>
+        <link>https://toyama0919.github.io/rds/2014/08/22/aws/</link>
+        <guid isPermaLink="true">https://toyama0919.github.io/rds/2014/08/22/aws/</guid>
+        
+        
+        <category>rds</category>
+        
+      </item>
+    
+      <item>
+        <title>日記開始</title>
+        <description>&lt;p&gt;技術的な日記を書いていきます。&lt;/p&gt;
+
+&lt;p&gt;開発していて詰まったことなど。&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 21 Aug 2014 03:48:27 +0900</pubDate>
+        <link>https://toyama0919.github.io/jekyll/update/2014/08/21/welcome-to-jekyll/</link>
+        <guid isPermaLink="true">https://toyama0919.github.io/jekyll/update/2014/08/21/welcome-to-jekyll/</guid>
+        
+        <category>startup</category>
+        
+        
+        <category>jekyll</category>
+        
+        <category>update</category>
+        
+      </item>
+    
+  </channel>
+</rss>
